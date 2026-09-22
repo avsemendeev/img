@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import {
   ReactFlow,
   Background,
@@ -17,52 +17,57 @@ import { TextNode } from './components/TextNode';
 import { TopBar } from './components/TopBar';
 import { AuthModal } from './components/AuthModal';
 import { HelpPanel } from './components/HelpPanel';
-import type { GenerationNodeData, TextNodeData } from './types';
+import { useProjects } from './hooks/useProjects';
 
 const nodeTypes = {
   generation: GenerationNode,
   text: TextNode,
 };
 
-const initialNodes: Node[] = [
-  {
-    id: '1',
-    type: 'text',
-    position: { x: 100, y: 150 },
-    data: {
-      label: 'Текст #1',
-      text: '',
-    } as TextNodeData,
-  },
-  {
-    id: '2',
-    type: 'generation',
-    position: { x: 500, y: 100 },
-    data: {
-      label: 'Генерация #1',
-      prompt: '',
-      imageUrl: '',
-      status: 'idle',
-    } as GenerationNodeData,
-  },
-  {
-    id: '3',
-    type: 'generation',
-    position: { x: 500, y: 500 },
-    data: {
-      label: 'Генерация #2',
-      prompt: '',
-      imageUrl: '',
-      status: 'idle',
-    } as GenerationNodeData,
-  },
-];
-
 export default function App() {
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const {
+    projects,
+    currentProject,
+    currentProjectId,
+    isLoaded,
+    updateCurrentProject,
+    createProject,
+    switchProject,
+    deleteProject,
+    renameProject,
+  } = useProjects();
+
+  const [nodes, setNodes, onNodesChange] = useNodesState<any>([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<any>([]);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [user, setUser] = useState<{ name: string; email: string } | null>(null);
+  const [saveTimeout, setSaveTimeout] = useState<any>(null);
+
+  // Load current project data
+  useEffect(() => {
+    if (currentProject && isLoaded) {
+      setNodes(currentProject.nodes || []);
+      setEdges(currentProject.edges || []);
+    }
+  }, [currentProjectId, isLoaded]);
+
+  // Auto-save with debounce
+  const scheduleSave = useCallback(() => {
+    if (saveTimeout) {
+      clearTimeout(saveTimeout);
+    }
+    const timeout = setTimeout(() => {
+      updateCurrentProject(nodes, edges);
+    }, 500);
+    setSaveTimeout(timeout);
+  }, [nodes, edges, updateCurrentProject, saveTimeout]);
+
+  // Save on any changes
+  useEffect(() => {
+    if (isLoaded && currentProjectId) {
+      scheduleSave();
+    }
+  }, [nodes, edges, isLoaded, currentProjectId]);
 
   const onConnect = useCallback(
     (params: Connection) => setEdges((eds) => addEdge(params, eds)),
@@ -70,26 +75,27 @@ export default function App() {
   );
 
   const onAddNode = useCallback((type: 'text' | 'generation') => {
-    const id = `${Date.now()}`;
-    const newNode: Node = {
+    const id = `${type}-${Date.now()}`;
+    const nodeDataObj = type === 'text'
+      ? {
+          label: `Текст #${nodes.filter((n) => n.type === 'text').length + 1}`,
+          text: '',
+        }
+      : {
+          label: `Генерация #${nodes.filter((n) => n.type === 'generation').length + 1}`,
+          prompt: '',
+          imageUrl: '',
+          status: 'idle',
+        };
+    
+    const newNode: Node = Object.assign({
       id,
       type,
       position: {
         x: Math.random() * 500 + 50,
         y: Math.random() * 400 + 50,
       },
-      data: type === 'text'
-        ? {
-            label: `Текст #${nodes.filter(n => n.type === 'text').length + 1}`,
-            text: '',
-          } as TextNodeData
-        : {
-            label: `Генерация #${nodes.filter(n => n.type === 'generation').length + 1}`,
-            prompt: '',
-            imageUrl: '',
-            status: 'idle',
-          } as GenerationNodeData,
-    };
+    }, { data: nodeDataObj });
     setNodes((nds) => [...nds, newNode]);
   }, [nodes, setNodes]);
 
@@ -102,13 +108,36 @@ export default function App() {
     setUser(null);
   };
 
+  if (!isLoaded) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-[var(--color-surface-secondary)]">
+        <div className="text-center">
+          <div className="w-12 h-12 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-[var(--color-accent)] to-indigo-500 flex items-center justify-center">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2L2 7l10 5 10-5-10-5z" />
+              <path d="M2 17l10 5 10-5" />
+              <path d="M2 12l10 5 10-5" />
+            </svg>
+          </div>
+          <p className="text-sm text-[var(--color-text-secondary)]">Загрузка...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col h-screen overflow-hidden">
       <TopBar
         user={user}
+        projects={projects}
+        currentProjectId={currentProjectId}
         onLoginClick={() => setShowAuthModal(true)}
         onLogout={handleLogout}
         onAddNode={onAddNode}
+        onSwitchProject={switchProject}
+        onCreateProject={createProject}
+        onDeleteProject={deleteProject}
+        onRenameProject={renameProject}
       />
 
       <div className="flex-1 relative">

@@ -11,6 +11,25 @@ export function GenerationNode({ id, data }: NodeProps) {
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [error, setError] = useState('');
 
+  const handleDownload = useCallback(async () => {
+    if (!imageUrl) return;
+    
+    try {
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `generated-image-${id}.jpg`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err) {
+      console.error('Ошибка скачивания:', err);
+    }
+  }, [imageUrl, id]);
+
   const handleGenerate = useCallback(async () => {
     if (!prompt.trim()) return;
 
@@ -67,22 +86,46 @@ export function GenerationNode({ id, data }: NodeProps) {
         {status === 'loading' ? (
           <div className="w-full h-48 rounded-xl shimmer" />
         ) : imageUrl ? (
-          <div className="relative group rounded-xl overflow-hidden border border-[var(--color-border)]">
-            <img
-              src={imageUrl}
-              alt="Сгенерированное изображение"
-              className="w-full h-48 object-cover"
-            />
-            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200 flex items-center justify-center">
-              <a
-                href={imageUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 px-3 py-1.5 bg-white/90 backdrop-blur-sm rounded-lg text-xs font-medium text-[var(--color-text-primary)] shadow-sm hover:bg-white"
-              >
-                Открыть в полном размере ↗
-              </a>
+          <div className="space-y-2">
+            <div className="relative group rounded-xl overflow-hidden border border-[var(--color-border)]">
+              <img
+                src={imageUrl}
+                alt="Сгенерированное изображение"
+                className="w-full h-48 object-cover"
+              />
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200 flex items-center justify-center gap-2">
+                <a
+                  href={imageUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 px-3 py-1.5 bg-white/90 backdrop-blur-sm rounded-lg text-xs font-medium text-[var(--color-text-primary)] shadow-sm hover:bg-white"
+                >
+                  Открыть ↗
+                </a>
+                <button
+                  onClick={handleDownload}
+                  className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 px-3 py-1.5 bg-white/90 backdrop-blur-sm rounded-lg text-xs font-medium text-[var(--color-text-primary)] shadow-sm hover:bg-white flex items-center gap-1"
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                  </svg>
+                  Скачать
+                </button>
+              </div>
             </div>
+            <button
+              onClick={handleDownload}
+              className="w-full h-8 px-3 text-xs font-medium rounded-lg border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-secondary)] transition-colors duration-150 flex items-center justify-center gap-1.5"
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+              Скачать изображение
+            </button>
           </div>
         ) : (
           <div className="w-full h-48 rounded-xl border-2 border-dashed border-[var(--color-border)] bg-[var(--color-surface-secondary)] flex items-center justify-center">

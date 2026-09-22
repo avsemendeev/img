@@ -1,14 +1,32 @@
 import { useState, useRef, useEffect } from 'react';
-import type { User } from '../types';
+import type { User, Project } from '../types';
+import { ProjectSelector } from './ProjectSelector';
 
 interface TopBarProps {
   user: User | null;
+  projects: Project[];
+  currentProjectId: string | null;
   onLoginClick: () => void;
   onLogout: () => void;
   onAddNode: (type: 'text' | 'generation') => void;
+  onSwitchProject: (projectId: string) => void;
+  onCreateProject: (name: string) => void;
+  onDeleteProject: (projectId: string) => void;
+  onRenameProject: (projectId: string, newName: string) => void;
 }
 
-export function TopBar({ user, onLoginClick, onLogout, onAddNode }: TopBarProps) {
+export function TopBar({
+  user,
+  projects,
+  currentProjectId,
+  onLoginClick,
+  onLogout,
+  onAddNode,
+  onSwitchProject,
+  onCreateProject,
+  onDeleteProject,
+  onRenameProject,
+}: TopBarProps) {
   const [showMenu, setShowMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -54,9 +72,20 @@ export function TopBar({ user, onLoginClick, onLogout, onAddNode }: TopBarProps)
         </span>
       </div>
 
-      {/* Center: Actions */}
-      <div className="flex items-center gap-2 relative" ref={menuRef}>
-        <div className="relative">
+      {/* Center: Projects & Actions */}
+      <div className="flex items-center gap-2">
+        {/* Project Selector */}
+        <ProjectSelector
+          projects={projects}
+          currentProjectId={currentProjectId}
+          onSwitch={onSwitchProject}
+          onCreate={onCreateProject}
+          onDelete={onDeleteProject}
+          onRename={onRenameProject}
+        />
+
+        {/* Add Node Button */}
+        <div className="relative" ref={menuRef}>
           <button
             onClick={() => setShowMenu(!showMenu)}
             className="h-8 px-3 text-sm font-medium rounded-lg border border-[var(--color-border)] text-[var(--color-text-primary)] hover:bg-[var(--color-surface-secondary)] transition-colors duration-150 flex items-center gap-1.5"

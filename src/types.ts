@@ -15,3 +15,12 @@ export interface User {
   name: string;
   email: string;
 }
+
+export interface Project {
+  id: string;
+  name: string;
+  nodes: any[];
+  edges: any[];
+  createdAt: number;
+  updatedAt: number;
+}
