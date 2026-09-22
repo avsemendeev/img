@@ -1,0 +1,132 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+  --color-surface: #ffffff;
+  --color-surface-secondary: #f8f8fa;
+  --color-border: #e5e5e7;
+  --color-border-hover: #d1d1d6;
+  --color-text-primary: #1d1d1f;
+  --color-text-secondary: #6e6e73;
+  --color-text-tertiary: #aeaeb2;
+  --color-accent: #0071e3;
+  --color-accent-hover: #0077ed;
+  --color-danger: #ff3b30;
+}
+
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: var(--color-surface-secondary);
+  color: var(--color-text-primary);
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  height: 100vh;
+}
+
+#root {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* React Flow overrides */
+.react-flow__node {
+  border-radius: 16px !important;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06), 0 1px 4px rgba(0, 0, 0, 0.04) !important;
+  border: 1px solid var(--color-border) !important;
+  background: white !important;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.react-flow__node:hover {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+  border-color: var(--color-border-hover) !important;
+}
+
+.react-flow__node.selected {
+  border-color: var(--color-accent) !important;
+  box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.15), 0 8px 32px rgba(0, 0, 0, 0.1) !important;
+}
+
+.react-flow__controls {
+  border-radius: 12px !important;
+  overflow: hidden !important;
+  border: 1px solid var(--color-border) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08) !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+  background: rgba(255, 255, 255, 0.72) !important;
+}
+
+.react-flow__controls-button {
+  background: transparent !important;
+  border-bottom: 1px solid var(--color-border) !important;
+  width: 32px !important;
+  height: 32px !important;
+}
+
+.react-flow__controls-button:hover {
+  background: rgba(0, 0, 0, 0.04) !important;
+}
+
+.react-flow__controls-button svg {
+  fill: var(--color-text-primary) !important;
+  max-width: 14px !important;
+  max-height: 14px !important;
+}
+
+.react-flow__background {
+  background: var(--color-surface-secondary) !important;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-text-tertiary);
+  border-radius: 3px;
+}
+
+/* Textarea custom styles */
+textarea:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.12);
+  border-color: var(--color-accent) !important;
+}
+
+/* Loading animation */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.shimmer {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+  40% { transform: scale(1); opacity: 1; }
+}
+
+.loading-dot {
+  animation: pulse-dot 1.4s infinite ease-in-out both;
+}
+
+.loading-dot:nth-child(1) { animation-delay: -0.32s; }
+.loading-dot:nth-child(2) { animation-delay: -0.16s; }
+.loading-dot:nth-child(3) { animation-delay: 0s; }
