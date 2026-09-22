@@ -6,6 +6,11 @@ export interface GenerationNodeData extends Record<string, unknown> {
   error?: string;
 }
 
+export interface TextNodeData extends Record<string, unknown> {
+  label: string;
+  text: string;
+}
+
 export interface User {
   name: string;
   email: string;

@@ -33,10 +33,10 @@ export function HelpPanel() {
               </div>
               <div>
                 <p className="text-xs font-medium text-[var(--color-text-primary)]">
-                  Введите промпт
+                  Добавьте узел
                 </p>
                 <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
-                  Опишите изображение в текстовом поле на узле
+                  Нажмите «+ Добавить узел» и выберите тип: <span className="text-emerald-600 font-medium">Текст</span> или <span className="text-[var(--color-accent)] font-medium">Генерация</span>
                 </p>
               </div>
             </div>
@@ -47,10 +47,10 @@ export function HelpPanel() {
               </div>
               <div>
                 <p className="text-xs font-medium text-[var(--color-text-primary)]">
-                  Нажмите «Сгенерировать»
+                  Соедините узлы
                 </p>
                 <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
-                  AI создаст изображение по вашему описанию
+                  Потяните от <span className="font-medium">правого маркера</span> (выход) одного узла к <span className="font-medium">левому маркеру</span> (вход) другого
                 </p>
               </div>
             </div>
@@ -61,10 +61,10 @@ export function HelpPanel() {
               </div>
               <div>
                 <p className="text-xs font-medium text-[var(--color-text-primary)]">
-                  Соединяйте узлы
+                  Введите промпт
                 </p>
                 <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
-                  Перетаскивайте от нижнего маркера к верхнему
+                  Опишите изображение в текстовом поле узла генерации
                 </p>
               </div>
             </div>
@@ -75,10 +75,10 @@ export function HelpPanel() {
               </div>
               <div>
                 <p className="text-xs font-medium text-[var(--color-text-primary)]">
-                  Добавляйте узлы
+                  Сгенерируйте
                 </p>
                 <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
-                  Кнопка «+ Добавить узел» в верхней панели
+                  Нажмите «Сгенерировать» для создания изображения
                 </p>
               </div>
             </div>
@@ -87,7 +87,7 @@ export function HelpPanel() {
           <div className="px-4 pb-4">
             <div className="p-3 rounded-xl bg-[var(--color-surface-secondary)] border border-[var(--color-border)]">
               <p className="text-xs text-[var(--color-text-secondary)]">
-                💡 <span className="font-medium">Совет:</span> Используйте колесо мыши для зума, зажмите пробел для перемещения по холсту.
+                💡 <span className="font-medium">Совет:</span> Используйте колесо мыши для зума. Текстовый узел можно подключить к генератору для передачи промпта.
               </p>
             </div>
           </div>

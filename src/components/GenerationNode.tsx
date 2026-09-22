@@ -19,25 +19,6 @@ export function GenerationNode({ id, data }: NodeProps) {
     setImageUrl('');
 
     try {
-      // ============================================================
-      // В реальном приложении с Next.js API Routes:
-      // ============================================================
-      // const response = await fetch('/api/generate-image', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ prompt }),
-      // });
-      // 
-      // if (!response.ok) {
-      //   const errorData = await response.json();
-      //   throw new Error(errorData.error || 'Ошибка сервера');
-      // }
-      // 
-      // const result = await response.json();
-      // setImageUrl(result.imageUrl);
-      // setStatus('success');
-      // ============================================================
-
       // Для демо — имитация генерации (2.5 секунды)
       await new Promise((resolve) => setTimeout(resolve, 2500));
 
@@ -61,14 +42,15 @@ export function GenerationNode({ id, data }: NodeProps) {
 
   return (
     <div className="w-[320px] bg-white rounded-2xl border border-[var(--color-border)] shadow-sm overflow-hidden">
+      {/* Handle: Вход слева */}
       <Handle
         type="target"
-        position={Position.Top}
+        position={Position.Left}
         className="!w-3 !h-3 !bg-[var(--color-accent)] !border-2 !border-white"
       />
 
       {/* Header */}
-      <div className="px-4 py-3 border-b border-[var(--color-border)] bg-[var(--color-surface-secondary)]">
+      <div className="px-4 py-2 border-b border-[var(--color-border)] bg-[var(--color-surface-secondary)]">
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-[var(--color-accent)]" />
           <span className="text-sm font-medium text-[var(--color-text-primary)]">
@@ -80,9 +62,56 @@ export function GenerationNode({ id, data }: NodeProps) {
         </div>
       </div>
 
-      {/* Body */}
-      <div className="p-4 space-y-3">
-        {/* Textarea */}
+      {/* Image Preview Section */}
+      <div className="p-4 pb-2">
+        {status === 'loading' ? (
+          <div className="w-full h-48 rounded-xl shimmer" />
+        ) : imageUrl ? (
+          <div className="relative group rounded-xl overflow-hidden border border-[var(--color-border)]">
+            <img
+              src={imageUrl}
+              alt="Сгенерированное изображение"
+              className="w-full h-48 object-cover"
+            />
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200 flex items-center justify-center">
+              <a
+                href={imageUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 px-3 py-1.5 bg-white/90 backdrop-blur-sm rounded-lg text-xs font-medium text-[var(--color-text-primary)] shadow-sm hover:bg-white"
+              >
+                Открыть в полном размере ↗
+              </a>
+            </div>
+          </div>
+        ) : (
+          <div className="w-full h-48 rounded-xl border-2 border-dashed border-[var(--color-border)] bg-[var(--color-surface-secondary)] flex items-center justify-center">
+            <div className="text-center">
+              <svg
+                width="48"
+                height="48"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="mx-auto text-[var(--color-text-tertiary)]"
+              >
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                <circle cx="8.5" cy="8.5" r="1.5" />
+                <polyline points="21 15 16 10 5 21" />
+              </svg>
+              <p className="text-xs text-[var(--color-text-tertiary)] mt-2">
+                Изображение появится здесь
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Prompt Section */}
+      <div className="px-4 pb-4 space-y-3">
         <Textarea
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
@@ -91,7 +120,6 @@ export function GenerationNode({ id, data }: NodeProps) {
           rows={3}
         />
 
-        {/* Generate Button */}
         <Button
           onClick={handleGenerate}
           disabled={status === 'loading' || !prompt.trim()}
@@ -117,31 +145,6 @@ export function GenerationNode({ id, data }: NodeProps) {
           )}
         </Button>
 
-        {/* Image Result */}
-        {status === 'loading' && (
-          <div className="w-full h-48 rounded-xl shimmer" />
-        )}
-
-        {status === 'success' && imageUrl && (
-          <div className="relative group rounded-xl overflow-hidden border border-[var(--color-border)]">
-            <img
-              src={imageUrl}
-              alt="Сгенерированное изображение"
-              className="w-full h-48 object-cover"
-            />
-            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200 flex items-center justify-center">
-              <a
-                href={imageUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 px-3 py-1.5 bg-white/90 backdrop-blur-sm rounded-lg text-xs font-medium text-[var(--color-text-primary)] shadow-sm hover:bg-white"
-              >
-                Открыть в полном размере ↗
-              </a>
-            </div>
-          </div>
-        )}
-
         {status === 'error' && (
           <div className="p-3 rounded-xl bg-red-50 border border-red-100">
             <p className="text-xs text-red-600 font-medium flex items-center gap-1.5">
@@ -162,9 +165,10 @@ export function GenerationNode({ id, data }: NodeProps) {
         )}
       </div>
 
+      {/* Handle: Выход справа */}
       <Handle
         type="source"
-        position={Position.Bottom}
+        position={Position.Right}
         className="!w-3 !h-3 !bg-[var(--color-accent)] !border-2 !border-white"
       />
     </div>

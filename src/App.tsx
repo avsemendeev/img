@@ -13,48 +13,48 @@ import {
 import '@xyflow/react/dist/style.css';
 
 import { GenerationNode } from './components/GenerationNode';
+import { TextNode } from './components/TextNode';
 import { TopBar } from './components/TopBar';
 import { AuthModal } from './components/AuthModal';
 import { HelpPanel } from './components/HelpPanel';
-import type { GenerationNodeData } from './types';
+import type { GenerationNodeData, TextNodeData } from './types';
 
 const nodeTypes = {
   generation: GenerationNode,
+  text: TextNode,
 };
 
-const initialNodes: Node<GenerationNodeData>[] = [
+const initialNodes: Node[] = [
   {
     id: '1',
+    type: 'text',
+    position: { x: 100, y: 150 },
+    data: {
+      label: 'Текст #1',
+      text: '',
+    } as TextNodeData,
+  },
+  {
+    id: '2',
     type: 'generation',
-    position: { x: 200, y: 100 },
+    position: { x: 500, y: 100 },
     data: {
       label: 'Генерация #1',
       prompt: '',
       imageUrl: '',
       status: 'idle',
-    },
+    } as GenerationNodeData,
   },
   {
-    id: '2',
+    id: '3',
     type: 'generation',
-    position: { x: 600, y: 300 },
+    position: { x: 500, y: 500 },
     data: {
       label: 'Генерация #2',
       prompt: '',
       imageUrl: '',
       status: 'idle',
-    },
-  },
-  {
-    id: '3',
-    type: 'generation',
-    position: { x: 200, y: 500 },
-    data: {
-      label: 'Генерация #3',
-      prompt: '',
-      imageUrl: '',
-      status: 'idle',
-    },
+    } as GenerationNodeData,
   },
 ];
 
@@ -69,24 +69,29 @@ export default function App() {
     [setEdges]
   );
 
-  const onAddNode = useCallback(() => {
+  const onAddNode = useCallback((type: 'text' | 'generation') => {
     const id = `${Date.now()}`;
-    const newNode: Node<GenerationNodeData> = {
+    const newNode: Node = {
       id,
-      type: 'generation',
+      type,
       position: {
         x: Math.random() * 500 + 50,
         y: Math.random() * 400 + 50,
       },
-      data: {
-        label: `Генерация #${nodes.length + 1}`,
-        prompt: '',
-        imageUrl: '',
-        status: 'idle',
-      },
+      data: type === 'text'
+        ? {
+            label: `Текст #${nodes.filter(n => n.type === 'text').length + 1}`,
+            text: '',
+          } as TextNodeData
+        : {
+            label: `Генерация #${nodes.filter(n => n.type === 'generation').length + 1}`,
+            prompt: '',
+            imageUrl: '',
+            status: 'idle',
+          } as GenerationNodeData,
     };
     setNodes((nds) => [...nds, newNode]);
-  }, [nodes.length, setNodes]);
+  }, [nodes, setNodes]);
 
   const handleLogin = (userData: { name: string; email: string }) => {
     setUser(userData);
