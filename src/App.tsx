@@ -15,9 +15,10 @@ import '@xyflow/react/dist/style.css';
 import { GenerationNode } from './components/GenerationNode';
 import { TextNode } from './components/TextNode';
 import { TopBar } from './components/TopBar';
-import { AuthModal } from './components/AuthModal';
+import { AuthScreen } from './components/AuthScreen';
 import { HelpPanel } from './components/HelpPanel';
 import { useProjects } from './hooks/useProjects';
+import type { User } from './types';
 
 const nodeTypes = {
   generation: GenerationNode,
@@ -39,8 +40,7 @@ export default function App() {
 
   const [nodes, setNodes, onNodesChange] = useNodesState<any>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<any>([]);
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const [user, setUser] = useState<{ name: string; email: string } | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [saveTimeout, setSaveTimeout] = useState<any>(null);
 
   // Load current project data
@@ -88,26 +88,32 @@ export default function App() {
           status: 'idle',
         };
     
-    const newNode: Node = Object.assign({
+    const newNode = {
       id,
       type,
       position: {
         x: Math.random() * 500 + 50,
         y: Math.random() * 400 + 50,
       },
-    }, { data: nodeDataObj });
+       nodeDataObj,
+    } as unknown as Node;
     setNodes((nds) => [...nds, newNode]);
   }, [nodes, setNodes]);
 
-  const handleLogin = (userData: { name: string; email: string }) => {
+  const handleLogin = (userData: User) => {
     setUser(userData);
-    setShowAuthModal(false);
   };
 
   const handleLogout = () => {
     setUser(null);
   };
 
+  // Не авторизован — показываем экран входа
+  if (!user) {
+    return <AuthScreen onLogin={handleLogin} onOpenModal={() => {}} />;
+  }
+
+  // Загрузка проектов
   if (!isLoaded) {
     return (
       <div className="flex items-center justify-center h-screen bg-[var(--color-surface-secondary)]">
@@ -125,13 +131,13 @@ export default function App() {
     );
   }
 
+  // Авторизован — показываем канвас
   return (
     <div className="flex flex-col h-screen overflow-hidden">
       <TopBar
         user={user}
         projects={projects}
         currentProjectId={currentProjectId}
-        onLoginClick={() => setShowAuthModal(true)}
         onLogout={handleLogout}
         onAddNode={onAddNode}
         onSwitchProject={switchProject}
@@ -177,13 +183,6 @@ export default function App() {
           </span>
         </div>
       </div>
-
-      {showAuthModal && (
-        <AuthModal
-          onClose={() => setShowAuthModal(false)}
-          onLogin={handleLogin}
-        />
-      )}
     </div>
   );
 }
