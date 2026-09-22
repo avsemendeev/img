@@ -1,27 +1,14 @@
-import type { User } from '../types';
+import { redirectToYandexAuth } from '../lib/yandex-auth';
 
 interface AuthScreenProps {
-  onLogin: (user: User) => void;
-  onOpenModal: () => void;
+  isLoading?: boolean;
+  error?: string | null;
 }
 
-export function AuthScreen({ onLogin, onOpenModal }: AuthScreenProps) {
+export function AuthScreen({ isLoading, error }: AuthScreenProps) {
   const handleYandexLogin = () => {
-    // В реальном приложении:
-    // window.location.href = '/api/auth/yandex/login';
-    
-    // Для демо — имитация входа
-    onLogin({
-      name: 'Пользователь',
-      email: 'user@yandex.ru',
-    });
-  };
-
-  const handleDemoLogin = () => {
-    onLogin({
-      name: 'Демо-пользователь',
-      email: 'demo@example.com',
-    });
+    // Реальный редирект на Яндекс OAuth
+    redirectToYandexAuth();
   };
 
   return (
@@ -76,26 +63,29 @@ export function AuthScreen({ onLogin, onOpenModal }: AuthScreenProps) {
             {/* Яндекс ID Button */}
             <button
               onClick={handleYandexLogin}
-              className="w-full h-11 px-4 text-sm font-medium rounded-xl border border-[var(--color-border)] text-[var(--color-text-primary)] hover:bg-[var(--color-surface-secondary)] transition-all duration-200 flex items-center justify-center gap-3 active:scale-[0.98]"
+              disabled={isLoading}
+              className="w-full h-11 px-4 text-sm font-medium rounded-xl border border-[var(--color-border)] text-[var(--color-text-primary)] hover:bg-[var(--color-surface-secondary)] transition-all duration-200 flex items-center justify-center gap-3 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                 <circle cx="12" cy="12" r="12" fill="#FFCC00" />
                 <path d="M13.5 18.5h-2.2V14L8.5 6.5h2.5l1.8 5.2 1.8-5.2H17l-2.8 7.5v4.5h-.7z" fill="#000" />
               </svg>
-              Войти через Яндекс ID
+              {isLoading ? 'Авторизация...' : 'Войти через Яндекс ID'}
             </button>
 
-            {/* Demo Button */}
-            <button
-              onClick={handleDemoLogin}
-              className="w-full h-11 px-4 text-sm font-medium rounded-xl bg-[var(--color-text-primary)] text-white hover:opacity-90 transition-all duration-200 flex items-center justify-center gap-2 active:scale-[0.98]"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                <circle cx="12" cy="7" r="4" />
-              </svg>
-              Демо-вход
-            </button>
+            {/* Error Message */}
+            {error && (
+              <div className="p-3 rounded-xl bg-red-50 border border-red-100">
+                <p className="text-xs text-red-600 font-medium flex items-center gap-1.5">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="8" x2="12" y2="12" />
+                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                  </svg>
+                  {error}
+                </p>
+              </div>
+            )}
 
             <p className="text-xs text-[var(--color-text-tertiary)] text-center leading-relaxed pt-2">
               Нажимая «Войти», вы соглашаетесь с обработкой персональных данных

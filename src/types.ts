@@ -12,8 +12,10 @@ export interface TextNodeData extends Record<string, unknown> {
 }
 
 export interface User {
+  id?: string;
   name: string;
   email: string;
+  avatar?: string;
 }
 
 export interface Project {

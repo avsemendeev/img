@@ -146,9 +146,17 @@ export function TopBar({
       {/* Right: User Info */}
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white text-xs font-bold">
-            {user.name.charAt(0).toUpperCase()}
-          </div>
+          {user.avatar ? (
+            <img 
+              src={user.avatar} 
+              alt={user.name}
+              className="w-7 h-7 rounded-full object-cover border border-[var(--color-border)]"
+            />
+          ) : (
+            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white text-xs font-bold">
+              {user.name.charAt(0).toUpperCase()}
+            </div>
+          )}
           <span className="text-sm text-[var(--color-text-secondary)] font-medium hidden sm:block">
             {user.name}
           </span>
