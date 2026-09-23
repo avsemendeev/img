@@ -69,20 +69,13 @@ export function GenerationNode({ id, data }: NodeProps) {
     setImageUrl('');
 
     try {
-      // Для демо — имитация генерации (2.5 секунды)
-      await new Promise((resolve) => setTimeout(resolve, 2500));
-
-      // Демо: показываем placeholder-изображения
-      const demoImages = [
-        'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&h=300&fit=crop',
-        'https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?w=400&h=300&fit=crop',
-        'https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?w=400&h=300&fit=crop',
-        'https://images.unsplash.com/photo-1614850523459-c2f4c699c52e?w=400&h=300&fit=crop',
-        'https://images.unsplash.com/photo-1604076913837-52ab5629fba9?w=400&h=300&fit=crop',
-        'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=400&h=300&fit=crop',
-      ];
-      const randomImage = demoImages[Math.floor(Math.random() * demoImages.length)];
-      setImageUrl(randomImage);
+      // Генерируем изображение через Pollinations.ai (бесплатный AI-сервис)
+      // Промпт кодируется в URL, seed добавляет вариативность
+      const seed = Math.floor(Math.random() * 1000000);
+      const encodedPrompt = encodeURIComponent(finalPrompt);
+      const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=512&height=512&seed=${seed}&nologo=true`;
+      
+      setImageUrl(imageUrl);
       setStatus('success');
     } catch (err) {
       setStatus('error');
@@ -123,6 +116,10 @@ export function GenerationNode({ id, data }: NodeProps) {
                 src={imageUrl}
                 alt="Сгенерированное изображение"
                 className="w-full h-48 object-cover"
+                onError={() => {
+                  setStatus('error');
+                  setError('Не удалось загрузить изображение');
+                }}
               />
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200 flex items-center justify-center gap-2">
                 <a
