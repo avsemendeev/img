@@ -56,12 +56,28 @@ npm run dev
    - **Доступы**: Яндекс ID (имя, email, аватар)
 4. Скопируйте `Client ID` в `.env.local` как `VITE_YANDEX_CLIENT_ID`
 
-### Sber GigaChat API
+### Sber GigaChat API (для генерации изображений)
 
 1. Перейдите на [https://developers.sber.ru/studio/workspaces](https://developers.sber.ru/studio/workspaces)
-2. Создайте проект GigaChat API
-3. Получите `Client ID` (Authorization Key) и `Secret Key`
-4. Скопируйте в `.env.local`
+2. Создайте проект **GigaChat API**
+3. В разделе **Настройки API** нажмите **Получить ключ**
+4. Скопируйте и сохраните:
+   - **Authorization Key**
+   - **Client ID**
+   - **Client Secret**
+5. Установите [сертификаты НУЦ Минцифры](https://developers.sber.ru/docs/ru/gigachat/certificates) (обязательно для работы API)
+6. Добавьте в `.env.local`:
+   ```
+   GIGACHAT_CLIENT_ID=ваш_client_id
+   GIGACHAT_CLIENT_SECRET=ваш_client_secret
+   ```
+
+**Как работает генерация:**
+- Промпт отправляется на серверный API `/api/generate-image`
+- Сервер получает Access Token через OAuth 2.0
+- Запрос на генерацию отправляется в GigaChat с параметром `function_call: "auto"`
+- GigaChat возвращает ID изображения в формате `<img src="uuid"/>`
+- Сервер скачивает изображение и возвращает его в base64
 
 ## 📁 Структура файлов
 

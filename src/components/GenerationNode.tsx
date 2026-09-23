@@ -44,16 +44,29 @@ export function GenerationNode({ id, data }: NodeProps) {
     if (!imageUrl) return;
     
     try {
-      const response = await fetch(imageUrl);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `generated-image-${id}.jpg`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      // Проверяем, является ли изображение base64 (от GigaChat) или URL
+      if (imageUrl.startsWith('data:image')) {
+        // Base64 изображение - создаем blob и скачиваем
+        const response = await fetch(imageUrl);
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `generated-image-${id}.jpg`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      } else {
+        // Обычный URL - скачиваем напрямую
+        const a = document.createElement('a');
+        a.href = imageUrl;
+        a.download = `generated-image-${id}.jpg`;
+        a.target = '_blank';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }
     } catch (err) {
       console.error('Ошибка скачивания:', err);
     }
@@ -69,21 +82,28 @@ export function GenerationNode({ id, data }: NodeProps) {
     setImageUrl('');
 
     try {
-      // Для демо — имитация генерации (2.5 секунды)
-      await new Promise((resolve) => setTimeout(resolve, 2500));
+      // Вызываем API для генерации изображения через GigaChat
+      const response = await fetch('/api/generate-image', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ prompt: finalPrompt }),
+      });
 
-      // Демо: показываем placeholder-изображения
-      const demoImages = [
-        'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&h=300&fit=crop',
-        'https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?w=400&h=300&fit=crop',
-        'https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?w=400&h=300&fit=crop',
-        'https://images.unsplash.com/photo-1614850523459-c2f4c699c52e?w=400&h=300&fit=crop',
-        'https://images.unsplash.com/photo-1604076913837-52ab5629fba9?w=400&h=300&fit=crop',
-        'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=400&h=300&fit=crop',
-      ];
-      const randomImage = demoImages[Math.floor(Math.random() * demoImages.length)];
-      setImageUrl(randomImage);
-      setStatus('success');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Ошибка генерации');
+      }
+
+      const data = await response.json();
+      
+      if (data.success && data.image) {
+        setImageUrl(data.image);
+        setStatus('success');
+      } else {
+        throw new Error('Не удалось получить изображение');
+      }
     } catch (err) {
       setStatus('error');
       setError(err instanceof Error ? err.message : 'Ошибка генерации');
@@ -123,6 +143,10 @@ export function GenerationNode({ id, data }: NodeProps) {
                 src={imageUrl}
                 alt="Сгенерированное изображение"
                 className="w-full h-48 object-cover"
+                onError={() => {
+                  setStatus('error');
+                  setError('Не удалось загрузить изображение');
+                }}
               />
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200 flex items-center justify-center gap-2">
                 <a
