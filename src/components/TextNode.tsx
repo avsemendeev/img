@@ -1,11 +1,22 @@
 import { useState } from 'react';
-import { Handle, Position, type NodeProps } from '@xyflow/react';
+import { Handle, Position, type NodeProps, useReactFlow } from '@xyflow/react';
 import { Textarea } from './ui/Textarea';
 import type { TextNodeData } from '../types';
 
 export function TextNode({ id, data }: NodeProps) {
   const nodeData = data as unknown as TextNodeData;
   const [text, setText] = useState(nodeData.text || '');
+  const { setNodes } = useReactFlow();
+
+  const handleTextChange = (newText: string) => {
+    setText(newText);
+    // Синхронизируем изменения с data ноды, чтобы они были видны другим компонентам
+    setNodes((nds) =>
+      nds.map((n) =>
+        n.id === id ? { ...n, data: { ...n.data, text: newText } } : n
+      )
+    );
+  };
 
   return (
     <div className="w-[280px] bg-white rounded-2xl border border-[var(--color-border)] shadow-sm overflow-hidden">
@@ -30,7 +41,7 @@ export function TextNode({ id, data }: NodeProps) {
       <div className="p-4">
         <Textarea
           value={text}
-          onChange={(e) => setText(e.target.value)}
+          onChange={(e) => handleTextChange(e.target.value)}
           placeholder="Введите текст или промпт..."
           label="Текст"
           rows={4}
