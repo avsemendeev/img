@@ -82,6 +82,8 @@ export function GenerationNode({ id, data }: NodeProps) {
     setImageUrl('');
 
     try {
+      console.log('Sending prompt:', finalPrompt);
+      
       // Вызываем API для генерации изображения через GigaChat
       const response = await fetch('/api/generate-image', {
         method: 'POST',
@@ -91,12 +93,16 @@ export function GenerationNode({ id, data }: NodeProps) {
         body: JSON.stringify({ prompt: finalPrompt }),
       });
 
+      console.log('Response status:', response.status);
+
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Ошибка генерации');
+        console.error('Error response:', errorData);
+        throw new Error(errorData.details || errorData.error || 'Ошибка генерации');
       }
 
       const data = await response.json();
+      console.log('Success response received');
       
       if (data.success && data.image) {
         setImageUrl(data.image);
@@ -105,6 +111,7 @@ export function GenerationNode({ id, data }: NodeProps) {
         throw new Error('Не удалось получить изображение');
       }
     } catch (err) {
+      console.error('Generation error:', err);
       setStatus('error');
       setError(err instanceof Error ? err.message : 'Ошибка генерации');
     }

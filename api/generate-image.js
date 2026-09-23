@@ -1,8 +1,7 @@
 // Vercel Serverless Function для генерации изображений через GigaChat API
 // Путь: api/generate-image.js
 
-import fetch from 'node-fetch';
-import https from 'https';
+const https = require('https');
 
 // Сертификаты НУЦ Минцифры (встроены для работы на Vercel)
 const RUSSIAN_TRUSTED_CA = `-----BEGIN CERTIFICATE-----
@@ -85,7 +84,31 @@ const httpsAgent = new https.Agent({
   ca: RUSSIAN_TRUSTED_CA,
 });
 
-export default async function handler(req, res) {
+// Функция для выполнения fetch с кастомным агентом
+async function fetchWithAgent(url, options = {}) {
+  const fetchOptions = {
+    ...options,
+    agent: httpsAgent,
+  };
+  
+  return fetch(url, fetchOptions);
+}
+
+module.exports = async function handler(req, res) {
+  // CORS headers
+  res.setHeader('Access-Control-Allow-Credentials', true);
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
+  res.setHeader(
+    'Access-Control-Allow-Headers',
+    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
+  );
+
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -102,14 +125,20 @@ export default async function handler(req, res) {
     const clientSecret = process.env.GIGACHAT_CLIENT_SECRET;
 
     if (!clientId || !clientSecret) {
+      console.error('Missing credentials:', { 
+        hasClientId: !!clientId, 
+        hasClientSecret: !!clientSecret 
+      });
       return res.status(500).json({ error: 'GigaChat credentials not configured' });
     }
 
     // Создаем Authorization Key (Base64 от clientId:clientSecret)
     const authKey = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
 
-    // Шаг 1: Получаем Access Token (используем node-fetch с кастомным агентом)
-    const tokenResponse = await fetch('https://ngw.devices.sberbank.ru:9443/api/v2/oauth', {
+    console.log('Step 1: Getting access token...');
+
+    // Шаг 1: Получаем Access Token
+    const tokenResponse = await fetchWithAgent('https://ngw.devices.sberbank.ru:9443/api/v2/oauth', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -118,44 +147,50 @@ export default async function handler(req, res) {
         'RqUID': crypto.randomUUID(),
       },
       body: 'scope=GIGACHAT_API_PERS',
-      agent: httpsAgent,
     });
 
     if (!tokenResponse.ok) {
       const errorText = await tokenResponse.text();
-      console.error('Token error:', errorText);
-      return res.status(500).json({ error: 'Failed to get access token' });
+      console.error('Token error:', tokenResponse.status, errorText);
+      return res.status(500).json({ 
+        error: 'Failed to get access token',
+        details: errorText 
+      });
     }
 
     const tokenData = await tokenResponse.json();
     const accessToken = tokenData.access_token;
+    console.log('Access token received successfully');
+
+    console.log('Step 2: Getting available models...');
 
     // Шаг 2: Получаем список доступных моделей
-    const modelsResponse = await fetch('https://api.giga.chat/v1/models', {
+    const modelsResponse = await fetchWithAgent('https://api.giga.chat/v1/models', {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
         'Authorization': `Bearer ${accessToken}`,
       },
-      agent: httpsAgent,
     });
 
     if (!modelsResponse.ok) {
       const errorText = await modelsResponse.text();
-      console.error('Models error:', errorText);
-      return res.status(500).json({ error: 'Failed to get models list' });
+      console.error('Models error:', modelsResponse.status, errorText);
+      return res.status(500).json({ 
+        error: 'Failed to get models list',
+        details: errorText 
+      });
     }
 
     const modelsData = await modelsResponse.json();
     console.log('Available models:', modelsData.data?.map(m => m.id));
 
     // Выбираем модель для генерации изображений
-    // Приоритет: GigaChat-3-Ultra, затем GigaChat-Pro, GigaChat, или первая доступная
+    // Приоритет: GigaChat-3-Ultra, затем любая другая GigaChat
     const availableModels = modelsData.data?.map(m => m.id) || [];
     let selectedModel = 'GigaChat-3-Ultra';
     
     if (!availableModels.includes(selectedModel)) {
-      // Если GigaChat-3-Ultra недоступна, пробуем другие модели
       selectedModel = availableModels.find(m => m.includes('GigaChat')) || availableModels[0];
     }
 
@@ -164,9 +199,10 @@ export default async function handler(req, res) {
     }
 
     console.log('Using model:', selectedModel);
+    console.log('Step 3: Generating image...');
 
     // Шаг 3: Генерируем изображение
-    const completionResponse = await fetch('https://api.giga.chat/v1/chat/completions', {
+    const completionResponse = await fetchWithAgent('https://api.giga.chat/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -187,41 +223,52 @@ export default async function handler(req, res) {
         ],
         function_call: 'auto',
       }),
-      agent: httpsAgent,
     });
 
     if (!completionResponse.ok) {
       const errorText = await completionResponse.text();
-      console.error('Completion error:', errorText);
-      return res.status(500).json({ error: 'Failed to generate image' });
+      console.error('Completion error:', completionResponse.status, errorText);
+      return res.status(500).json({ 
+        error: 'Failed to generate image',
+        details: errorText 
+      });
     }
 
     const completionData = await completionResponse.json();
     const content = completionData.choices[0]?.message?.content || '';
 
+    console.log('Completion response received');
+
     // Извлекаем ID изображения из ответа
     const imgMatch = content.match(/<img\s+src="([^"]+)"/);
     
     if (!imgMatch || !imgMatch[1]) {
-      return res.status(500).json({ error: 'No image generated' });
+      console.error('No image found in response:', content);
+      return res.status(500).json({ 
+        error: 'No image generated',
+        response: content 
+      });
     }
 
     const fileId = imgMatch[1];
+    console.log('Step 4: Downloading image with ID:', fileId);
 
     // Шаг 4: Скачиваем изображение
-    const fileResponse = await fetch(`https://api.giga.chat/v1/files/${fileId}/content`, {
+    const fileResponse = await fetchWithAgent(`https://api.giga.chat/v1/files/${fileId}/content`, {
       method: 'GET',
       headers: {
         'Accept': 'application/jpg',
         'Authorization': `Bearer ${accessToken}`,
       },
-      agent: httpsAgent,
     });
 
     if (!fileResponse.ok) {
       const errorText = await fileResponse.text();
-      console.error('File download error:', errorText);
-      return res.status(500).json({ error: 'Failed to download image' });
+      console.error('File download error:', fileResponse.status, errorText);
+      return res.status(500).json({ 
+        error: 'Failed to download image',
+        details: errorText 
+      });
     }
 
     // Конвертируем в base64
@@ -229,13 +276,18 @@ export default async function handler(req, res) {
     const buffer = Buffer.from(arrayBuffer);
     const base64Image = buffer.toString('base64');
 
+    console.log('Image generated and downloaded successfully');
+
     // Возвращаем изображение
     res.status(200).json({
       success: true,
-      image: `image/jpeg;base64,${base64Image}`,
+      image: `data:image/jpeg;base64,${base64Image}`,
     });
   } catch (error) {
     console.error('Generate image error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ 
+      error: 'Internal server error',
+      details: error.message 
+    });
   }
 }
