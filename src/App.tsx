@@ -14,6 +14,7 @@ import '@xyflow/react/dist/style.css';
 
 import { GenerationNode } from './components/GenerationNode';
 import { TextNode } from './components/TextNode';
+import { CustomEdge } from './components/CustomEdge';
 import { TopBar } from './components/TopBar';
 import { AuthScreen } from './components/AuthScreen';
 import { HelpPanel } from './components/HelpPanel';
@@ -23,6 +24,10 @@ import { useAuth } from './hooks/useAuth';
 const nodeTypes = {
   generation: GenerationNode,
   text: TextNode,
+};
+
+const edgeTypes = {
+  custom: CustomEdge,
 };
 
 export default function App() {
@@ -71,9 +76,21 @@ export default function App() {
   }, [nodes, edges, isLoaded, currentProjectId]);
 
   const onConnect = useCallback(
-    (params: Connection) => setEdges((eds) => addEdge(params, eds)),
+    (params: Connection) => setEdges((eds) => addEdge({ ...params, type: 'custom' }, eds)),
     [setEdges]
   );
+
+  // Обработка удаления связей через кастомное событие
+  useEffect(() => {
+    const handleDeleteEdge = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const edgeId = customEvent.detail;
+      setEdges((eds) => eds.filter((e) => e.id !== edgeId));
+    };
+
+    window.addEventListener('delete-edge', handleDeleteEdge);
+    return () => window.removeEventListener('delete-edge', handleDeleteEdge);
+  }, [setEdges]);
 
   const onAddNode = useCallback((type: 'text' | 'generation') => {
     const id = `${type}-${Date.now()}`;
@@ -165,6 +182,7 @@ export default function App() {
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
           nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
           fitView
           className="bg-[var(--color-surface-secondary)]"
           defaultViewport={{ x: 0, y: 0, zoom: 0.7 }}

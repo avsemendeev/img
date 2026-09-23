@@ -33,7 +33,7 @@ function createDefaultProject(): Omit<Project, 'id' | 'createdAt' | 'updatedAt'>
         id: 'edge-1',
         source: 'text-1',
         target: 'gen-1',
-        type: 'smoothstep',
+        type: 'custom',
         animated: true,
       },
     ],
