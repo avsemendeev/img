@@ -11,10 +11,9 @@
  * 1. Зарегистрируйте новое приложение
  * 2. Платформа: Веб-сервисы
  * 3. Доступы: Яндекс ID (имя, email, аватар)
- * 4. Redirect URI:
- *    - Локально: http://localhost:3000/
- *    - Продакшен: https://your-app.vercel.app/
+ * 4. Redirect URI: https://your-app.vercel.app/
  * 5. Скопируйте Client ID в .env.local как VITE_YANDEX_CLIENT_ID
+ * 6. Скопируйте Redirect URI в .env.local как VITE_YANDEX_REDIRECT_URI
  * 
  * ============================================================
  */
@@ -47,9 +46,15 @@ const getClientId = (): string => {
   return clientId;
 };
 
-// Получение redirect URI (текущий URL без hash/query)
+// Получение redirect URI из переменных окружения
 const getRedirectUri = (): string => {
-  return `${window.location.origin}${window.location.pathname}`;
+  // @ts-ignore - Vite env
+  const redirectUri = import.meta.env.VITE_YANDEX_REDIRECT_URI;
+  if (!redirectUri) {
+    console.error('VITE_YANDEX_REDIRECT_URI не установлен в .env.local');
+    return '';
+  }
+  return redirectUri;
 };
 
 /**
