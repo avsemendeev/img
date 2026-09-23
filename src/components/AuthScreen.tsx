@@ -1,4 +1,4 @@
-import { redirectToYandexAuth } from '../lib/yandex-auth';
+import { isYandexConfigured, redirectToYandexAuth } from '../lib/yandex-auth';
 
 interface AuthScreenProps {
   isLoading?: boolean;
@@ -6,8 +6,18 @@ interface AuthScreenProps {
 }
 
 export function AuthScreen({ isLoading, error }: AuthScreenProps) {
+  const isConfigured = isYandexConfigured();
+
   const handleYandexLogin = () => {
-    // Реальный редирект на Яндекс OAuth
+    if (!isConfigured) {
+      alert(
+        'Не указан YANDEX_CLIENT_ID.\n\n' +
+        'Добавьте в переменные окружения Vercel:\n' +
+        'VITE_YANDEX_CLIENT_ID = ваш_client_id\n\n' +
+        'Важно: имя должно начинаться с VITE_'
+      );
+      return;
+    }
     redirectToYandexAuth();
   };
 
@@ -84,6 +94,37 @@ export function AuthScreen({ isLoading, error }: AuthScreenProps) {
                   </svg>
                   {error}
                 </p>
+              </div>
+            )}
+
+            {/* Config warning */}
+            {!isConfigured && (
+              <div className="p-3 rounded-xl bg-amber-50 border border-amber-200">
+                <p className="text-xs text-amber-800 font-medium mb-2 flex items-center gap-1.5">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                    <line x1="12" y1="9" x2="12" y2="13" />
+                    <line x1="12" y1="17" x2="12.01" y2="17" />
+                  </svg>
+                  Требуется настройка
+                </p>
+                <p className="text-xs text-amber-700 leading-relaxed">
+                  Добавьте в переменные окружения Vercel:
+                </p>
+                <code className="block mt-2 p-2 bg-white rounded-md border border-amber-200 text-xs text-amber-900 font-mono">
+                  VITE_YANDEX_CLIENT_ID=ваш_client_id
+                </code>
+                <p className="text-xs text-amber-700 mt-2 leading-relaxed">
+                  ⚠️ Имя переменной должно начинаться с <code className="font-mono font-bold">VITE_</code>, иначе она не будет доступна в клиентском коде.
+                </p>
+                <a
+                  href="https://oauth.yandex.ru"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block mt-2 text-xs font-medium text-[var(--color-accent)] hover:underline"
+                >
+                  Получить Client ID →
+                </a>
               </div>
             )}
 
