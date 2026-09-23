@@ -1,4 +1,6 @@
-import { Agent } from 'undici';
+import fetch from 'node-fetch';
+import https from 'https';
+import { v4 as uuidv4 } from 'uuid';
 
 // Сертификаты НУЦ Минцифры (встроены для работы на Vercel)
 const RUSSIAN_TRUSTED_CA = `-----BEGIN CERTIFICATE-----
@@ -76,20 +78,16 @@ GcyIdu7yNMMRihGVZCYr8rYiJoKiOzDqOkPkLOPdhtVlgnhowzHDxMHND/E2WA5p
 ZHuNM/m0TXt2wTTPL7JH2YC0gPz/BvvSzjksgzU5rLbRyUKQkgU=
 -----END CERTIFICATE-----`;
 
-// Создаем undici Agent с сертификатами Минцифры
-// В Node.js 20+ встроенный fetch использует undici,
-// поэтому нужно использовать undici.Agent с параметром dispatcher
-const agent = new Agent({
-  connect: {
-    ca: RUSSIAN_TRUSTED_CA,
-  },
+// Создаем HTTPS агент с сертификатами Минцифры
+const httpsAgent = new https.Agent({
+  ca: RUSSIAN_TRUSTED_CA,
 });
 
-// Функция для выполнения fetch с кастомным dispatcher
+// Функция для выполнения fetch с кастомным агентом
 async function fetchWithCert(url, options = {}) {
   return fetch(url, {
     ...options,
-    dispatcher: agent,
+    agent: httpsAgent,
   });
 }
 
@@ -143,7 +141,7 @@ export default async function handler(req, res) {
         'Content-Type': 'application/x-www-form-urlencoded',
         'Accept': 'application/json',
         'Authorization': `Basic ${authKey}`,
-        'RqUID': crypto.randomUUID(),
+        'RqUID': uuidv4(),
       },
       body: 'scope=GIGACHAT_API_PERS',
     });
