@@ -36,16 +36,23 @@ export interface YandexTokenData {
   state?: string;
 }
 
-// Получение Client ID из переменных окружения
+// Получение Client ID из переменных окружения.
+// Поддерживаются оба варианта имени:
+//   - VITE_YANDEX_CLIENT_ID (правильный для Vite/Vercel)
+//   - YANDEX_CLIENT_ID (legacy, для обратной совместимости)
 const getClientId = (): string => {
   // @ts-ignore - Vite env
-  const clientId = import.meta.env.VITE_YANDEX_CLIENT_ID;
-  if (!clientId) {
-    console.error('VITE_YANDEX_CLIENT_ID не установлен в .env.local');
-    return '';
-  }
+  const env = import.meta.env || {};
+  const clientId = env.VITE_YANDEX_CLIENT_ID || env.YANDEX_CLIENT_ID || '';
   return clientId;
 };
+
+/**
+ * Проверяет, настроен ли Client ID.
+ */
+export function isYandexConfigured(): boolean {
+  return getClientId().length > 0;
+}
 
 // Получение redirect URI (текущий URL без hash/query)
 const getRedirectUri = (): string => {
