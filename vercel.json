@@ -3,10 +3,9 @@
   "outputDirectory": "dist",
   "framework": "vite",
   "functions": {
-    "api/*.cjs": {
+    "api/*.js": {
       "memory": 1024,
-      "maxDuration": 60,
-      "runtime": "@vercel/node@3.0.0"
+      "maxDuration": 60
     }
   },
   "rewrites": [

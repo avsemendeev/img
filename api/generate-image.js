@@ -1,7 +1,4 @@
-// Vercel Serverless Function для генерации изображений через GigaChat API
-// Путь: api/generate-image.cjs
-
-const https = require('https');
+import https from 'https';
 
 // Сертификаты НУЦ Минцифры (встроены для работы на Vercel)
 const RUSSIAN_TRUSTED_CA = `-----BEGIN CERTIFICATE-----
@@ -94,7 +91,7 @@ async function fetchWithAgent(url, options = {}) {
   return fetch(url, fetchOptions);
 }
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   // CORS headers
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -281,7 +278,7 @@ module.exports = async function handler(req, res) {
     // Возвращаем изображение
     res.status(200).json({
       success: true,
-      image: `data:image/jpeg;base64,${base64Image}`,
+      image: `image/jpeg;base64,${base64Image}`,
     });
   } catch (error) {
     console.error('Generate image error:', error);
