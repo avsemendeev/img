@@ -130,7 +130,41 @@ export default async function handler(req, res) {
     const tokenData = await tokenResponse.json();
     const accessToken = tokenData.access_token;
 
-    // Шаг 2: Генерируем изображение
+    // Шаг 2: Получаем список доступных моделей
+    const modelsResponse = await fetch('https://api.giga.chat/v1/models', {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${accessToken}`,
+      },
+      agent: httpsAgent,
+    });
+
+    if (!modelsResponse.ok) {
+      const errorText = await modelsResponse.text();
+      console.error('Models error:', errorText);
+      return res.status(500).json({ error: 'Failed to get models list' });
+    }
+
+    const modelsData = await modelsResponse.json();
+    console.log('Available models:', modelsData.data?.map(m => m.id));
+
+    // Выбираем модель для генерации изображений
+    // Приоритет: GigaChat-Pro, GigaChat, или первая доступная
+    const availableModels = modelsData.data?.map(m => m.id) || [];
+    let selectedModel = 'GigaChat-Pro';
+    
+    if (!availableModels.includes(selectedModel)) {
+      selectedModel = availableModels.find(m => m.includes('GigaChat')) || availableModels[0];
+    }
+
+    if (!selectedModel) {
+      return res.status(500).json({ error: 'No available models found' });
+    }
+
+    console.log('Using model:', selectedModel);
+
+    // Шаг 3: Генерируем изображение
     const completionResponse = await fetch('https://api.giga.chat/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -139,7 +173,7 @@ export default async function handler(req, res) {
         'Authorization': `Bearer ${accessToken}`,
       },
       body: JSON.stringify({
-        model: 'GigaChat',
+        model: selectedModel,
         messages: [
           {
             role: 'system',
@@ -173,7 +207,7 @@ export default async function handler(req, res) {
 
     const fileId = imgMatch[1];
 
-    // Шаг 3: Скачиваем изображение
+    // Шаг 4: Скачиваем изображение
     const fileResponse = await fetch(`https://api.giga.chat/v1/files/${fileId}/content`, {
       method: 'GET',
       headers: {
