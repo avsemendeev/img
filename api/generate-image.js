@@ -1,4 +1,4 @@
-import https from 'https';
+import { Agent } from 'undici';
 
 // Сертификаты НУЦ Минцифры (встроены для работы на Vercel)
 const RUSSIAN_TRUSTED_CA = `-----BEGIN CERTIFICATE-----
@@ -76,19 +76,21 @@ GcyIdu7yNMMRihGVZCYr8rYiJoKiOzDqOkPkLOPdhtVlgnhowzHDxMHND/E2WA5p
 ZHuNM/m0TXt2wTTPL7JH2YC0gPz/BvvSzjksgzU5rLbRyUKQkgU=
 -----END CERTIFICATE-----`;
 
-// Создаем HTTPS агент с сертификатами Минцифры
-const httpsAgent = new https.Agent({
-  ca: RUSSIAN_TRUSTED_CA,
+// Создаем undici Agent с сертификатами Минцифры
+// В Node.js 20+ встроенный fetch использует undici,
+// поэтому нужно использовать undici.Agent с параметром dispatcher
+const agent = new Agent({
+  connect: {
+    ca: RUSSIAN_TRUSTED_CA,
+  },
 });
 
-// Функция для выполнения fetch с кастомным агентом
-async function fetchWithAgent(url, options = {}) {
-  const fetchOptions = {
+// Функция для выполнения fetch с кастомным dispatcher
+async function fetchWithCert(url, options = {}) {
+  return fetch(url, {
     ...options,
-    agent: httpsAgent,
-  };
-  
-  return fetch(url, fetchOptions);
+    dispatcher: agent,
+  });
 }
 
 export default async function handler(req, res) {
@@ -135,7 +137,7 @@ export default async function handler(req, res) {
     console.log('Step 1: Getting access token...');
 
     // Шаг 1: Получаем Access Token
-    const tokenResponse = await fetchWithAgent('https://ngw.devices.sberbank.ru:9443/api/v2/oauth', {
+    const tokenResponse = await fetchWithCert('https://ngw.devices.sberbank.ru:9443/api/v2/oauth', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -162,7 +164,7 @@ export default async function handler(req, res) {
     console.log('Step 2: Getting available models...');
 
     // Шаг 2: Получаем список доступных моделей
-    const modelsResponse = await fetchWithAgent('https://api.giga.chat/v1/models', {
+    const modelsResponse = await fetchWithCert('https://api.giga.chat/v1/models', {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
@@ -199,7 +201,7 @@ export default async function handler(req, res) {
     console.log('Step 3: Generating image...');
 
     // Шаг 3: Генерируем изображение
-    const completionResponse = await fetchWithAgent('https://api.giga.chat/v1/chat/completions', {
+    const completionResponse = await fetchWithCert('https://api.giga.chat/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -251,7 +253,7 @@ export default async function handler(req, res) {
     console.log('Step 4: Downloading image with ID:', fileId);
 
     // Шаг 4: Скачиваем изображение
-    const fileResponse = await fetchWithAgent(`https://api.giga.chat/v1/files/${fileId}/content`, {
+    const fileResponse = await fetchWithCert(`https://api.giga.chat/v1/files/${fileId}/content`, {
       method: 'GET',
       headers: {
         'Accept': 'application/jpg',
@@ -278,7 +280,7 @@ export default async function handler(req, res) {
     // Возвращаем изображение
     res.status(200).json({
       success: true,
-      image: `image/jpeg;base64,${base64Image}`,
+      image: `data:image/jpeg;base64,${base64Image}`,
     });
   } catch (error) {
     console.error('Generate image error:', error);
