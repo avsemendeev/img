@@ -44,16 +44,29 @@ export function GenerationNode({ id, data }: NodeProps) {
     if (!imageUrl) return;
     
     try {
-      const response = await fetch(imageUrl);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `generated-image-${id}.jpg`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      // Проверяем, является ли изображение base64 (от GigaChat) или URL
+      if (imageUrl.startsWith('data:image')) {
+        // Base64 изображение - создаем blob и скачиваем
+        const response = await fetch(imageUrl);
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `generated-image-${id}.jpg`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      } else {
+        // Обычный URL - скачиваем напрямую
+        const a = document.createElement('a');
+        a.href = imageUrl;
+        a.download = `generated-image-${id}.jpg`;
+        a.target = '_blank';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }
     } catch (err) {
       console.error('Ошибка скачивания:', err);
     }
@@ -69,14 +82,28 @@ export function GenerationNode({ id, data }: NodeProps) {
     setImageUrl('');
 
     try {
-      // Генерируем изображение через Pollinations.ai (бесплатный AI-сервис)
-      // Промпт кодируется в URL, seed добавляет вариативность
-      const seed = Math.floor(Math.random() * 1000000);
-      const encodedPrompt = encodeURIComponent(finalPrompt);
-      const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=512&height=512&seed=${seed}&nologo=true`;
+      // Вызываем API для генерации изображения через GigaChat
+      const response = await fetch('/api/generate-image', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ prompt: finalPrompt }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Ошибка генерации');
+      }
+
+      const data = await response.json();
       
-      setImageUrl(imageUrl);
-      setStatus('success');
+      if (data.success && data.image) {
+        setImageUrl(data.image);
+        setStatus('success');
+      } else {
+        throw new Error('Не удалось получить изображение');
+      }
     } catch (err) {
       setStatus('error');
       setError(err instanceof Error ? err.message : 'Ошибка генерации');
