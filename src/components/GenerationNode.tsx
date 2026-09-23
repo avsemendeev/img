@@ -1,8 +1,8 @@
-import { useState, useCallback } from 'react';
-import { Handle, Position, type NodeProps } from '@xyflow/react';
+import { useState, useCallback, useMemo } from 'react';
+import { Handle, Position, type NodeProps, useNodes, useEdges, useReactFlow } from '@xyflow/react';
 import { Button } from './ui/Button';
 import { Textarea } from './ui/Textarea';
-import type { GenerationNodeData } from '../types';
+import type { GenerationNodeData, TextNodeData } from '../types';
 
 export function GenerationNode({ id, data }: NodeProps) {
   const nodeData = data as unknown as GenerationNodeData;
@@ -10,6 +10,35 @@ export function GenerationNode({ id, data }: NodeProps) {
   const [imageUrl, setImageUrl] = useState(nodeData.imageUrl || '');
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [error, setError] = useState('');
+  const { setNodes } = useReactFlow();
+  const nodes = useNodes();
+  const edges = useEdges();
+
+  // Вычисляем входящий промпт из связанных текстовых нод
+  const incomingPrompt = useMemo(() => {
+    const incomingEdges = edges.filter((e) => e.target === id);
+    const texts: string[] = [];
+    for (const edge of incomingEdges) {
+      const sourceNode = nodes.find((n) => n.id === edge.source);
+      if (sourceNode?.type === 'text') {
+        const textData = sourceNode.data as unknown as TextNodeData;
+        if (textData.text && textData.text.trim()) {
+          texts.push(textData.text.trim());
+        }
+      }
+    }
+    return texts.join('\n');
+  }, [edges, nodes, id]);
+
+  const handlePromptChange = (newPrompt: string) => {
+    setPrompt(newPrompt);
+    // Синхронизируем изменения с data ноды
+    setNodes((nds) =>
+      nds.map((n) =>
+        n.id === id ? { ...n, data: { ...n.data, prompt: newPrompt } } : n
+      )
+    );
+  };
 
   const handleDownload = useCallback(async () => {
     if (!imageUrl) return;
@@ -31,7 +60,9 @@ export function GenerationNode({ id, data }: NodeProps) {
   }, [imageUrl, id]);
 
   const handleGenerate = useCallback(async () => {
-    if (!prompt.trim()) return;
+    // Используем prompt или incomingPrompt
+    const finalPrompt = prompt.trim() || incomingPrompt;
+    if (!finalPrompt) return;
 
     setStatus('loading');
     setError('');
@@ -57,7 +88,7 @@ export function GenerationNode({ id, data }: NodeProps) {
       setStatus('error');
       setError(err instanceof Error ? err.message : 'Ошибка генерации');
     }
-  }, [prompt]);
+  }, [prompt, incomingPrompt]);
 
   return (
     <div className="w-[320px] bg-white rounded-2xl border border-[var(--color-border)] shadow-sm overflow-hidden">
@@ -155,9 +186,25 @@ export function GenerationNode({ id, data }: NodeProps) {
 
       {/* Prompt Section */}
       <div className="px-4 pb-4 space-y-3">
+        {/* Входящий промпт из текстовой ноды */}
+        {incomingPrompt && (
+          <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-100">
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-600">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+              </svg>
+              <span className="text-xs font-medium text-emerald-700">Входящий промпт</span>
+            </div>
+            <p className="text-xs text-emerald-900 leading-relaxed whitespace-pre-wrap">
+              {incomingPrompt}
+            </p>
+          </div>
+        )}
+
         <Textarea
           value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
+          onChange={(e) => handlePromptChange(e.target.value)}
           placeholder="Опишите изображение, которое хотите создать..."
           label="Промпт"
           rows={3}
@@ -165,7 +212,7 @@ export function GenerationNode({ id, data }: NodeProps) {
 
         <Button
           onClick={handleGenerate}
-          disabled={status === 'loading' || !prompt.trim()}
+          disabled={status === 'loading' || (!prompt.trim() && !incomingPrompt)}
           className="w-full"
           variant="default"
         >
