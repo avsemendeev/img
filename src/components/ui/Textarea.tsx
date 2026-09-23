@@ -12,16 +12,20 @@ interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
 }
 
 export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
-  ({ className = '', label, error, ...props }, ref) => {
+  ({ className = '', label, error, disabled, ...props }, ref) => {
     return (
       <div className="space-y-1.5">
         {label && (
-          <label className="text-xs font-medium text-[var(--color-text-secondary)]">
+          <label className={`text-xs font-medium ${disabled ? 'text-[var(--color-text-tertiary)]' : 'text-[var(--color-text-secondary)]'}`}>
             {label}
+            {disabled && (
+              <span className="ml-1.5 text-[var(--color-text-tertiary)] font-normal">(из текстовой ноды)</span>
+            )}
           </label>
         )}
         <textarea
           ref={ref}
+          disabled={disabled}
           className={`
             w-full px-3 py-2 text-sm 
             rounded-xl border 
@@ -31,6 +35,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
             border-[var(--color-border)]
             focus:border-[var(--color-accent)]
             transition-all duration-200
+            ${disabled ? 'bg-[var(--color-surface-secondary)] text-[var(--color-text-secondary)] cursor-not-allowed border-[var(--color-border)]' : ''}
             ${error ? 'border-[var(--color-danger)]' : ''}
             ${className}
           `.trim()}
