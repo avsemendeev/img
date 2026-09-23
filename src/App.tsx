@@ -80,17 +80,7 @@ export default function App() {
     [setEdges]
   );
 
-  // Обработка удаления связей через кастомное событие
-  useEffect(() => {
-    const handleDeleteEdge = (event: Event) => {
-      const customEvent = event as CustomEvent;
-      const edgeId = customEvent.detail;
-      setEdges((eds) => eds.filter((e) => e.id !== edgeId));
-    };
 
-    window.addEventListener('delete-edge', handleDeleteEdge);
-    return () => window.removeEventListener('delete-edge', handleDeleteEdge);
-  }, [setEdges]);
 
   const onAddNode = useCallback((type: 'text' | 'generation') => {
     const id = `${type}-${Date.now()}`;

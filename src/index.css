@@ -99,6 +99,35 @@ body {
   border-radius: 3px;
 }
 
+/* Edge hover effect */
+.react-flow__edge:hover .react-flow__edge-path {
+  stroke: var(--color-accent) !important;
+  stroke-width: 3px !important;
+}
+
+.react-flow__edge {
+  cursor: pointer;
+}
+
+/* Кнопка удаления связи - всегда видна с низкой прозрачностью */
+.edgebutton-container {
+  opacity: 0.3;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 1000;
+}
+
+/* При наведении на связь - кнопка становится полностью видимой */
+.react-flow__edge:hover .edgebutton-container {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+/* При наведении на саму кнопку */
+.edgebutton-container:hover {
+  opacity: 1 !important;
+  transform: scale(1.15);
+}
+
 /* Textarea custom styles */
 textarea:focus {
   outline: none;
