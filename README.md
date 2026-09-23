@@ -1,6 +1,22 @@
-# AI Canvas — Генератор изображений
+# AI Canvas — Генератор изображений (MVP)
 
-Нодовый интерфейс для генерации изображений через AI с авторизацией через Яндекс ID.
+Нодовый интерфейс для генерации изображений через AI, построенный на React Flow с авторизацией через Яндекс ID и интеграцией GigaChat API.
+
+## 🏗 Архитектура
+
+```
+┌─────────────────────────────────────────────────────┐
+│                   ФРОНТЕНД (React)                   │
+│  ┌──────────┐  ┌──────────────┐  ┌──────────────┐  │
+│  │  TopBar  │  │  React Flow  │  │  AuthScreen  │  │
+│  │          │  │  (Canvas)    │  │              │  │
+│  │          │  │  ┌────────┐  │  │              │  │
+│  │          │  │  │Custom  │  │  │              │  │
+│  │          │  │  │Node    │  │  │              │  │
+│  │          │  │  └────────┘  │  │              │  │
+│  └──────────┘  └──────────────┘  └──────────────┘  │
+└─────────────────────────────────────────────────────┘
+```
 
 ## 🚀 Быстрый старт
 
@@ -10,40 +26,72 @@
 npm install
 ```
 
-### 2. Настройка Яндекс ID
-
-1. Перейдите на [https://oauth.yandex.ru](https://oauth.yandex.ru)
-2. Нажмите "Зарегистрировать новое приложение"
-3. Заполните данные:
-   - **Название**: AI Canvas
-   - **Платформа**: Веб-сервисы
-   - **Redirect URI**: 
-     - Для локальной разработки: `http://localhost:3000/`
-     - Для продакшена: `https://your-app.vercel.app/`
-   - **Доступы**: Отметьте "Яндекс ID" (имя, email, аватар)
-4. Скопируйте **Client ID** из настроек приложения
-
-### 3. Настройка окружения
-
-Создайте файл `.env.local` в корне проекта:
+### 2. Настройка окружения
 
 ```bash
 cp .env.local.example .env.local
+# Заполните .env.local своими ключами
 ```
 
-Откройте `.env.local` и добавьте ваш Client ID:
-
-```env
-VITE_YANDEX_CLIENT_ID=ваш_client_id_из_яндекс
-```
-
-### 4. Запуск
+### 3. Запуск
 
 ```bash
 npm run dev
 ```
 
-Откройте [http://localhost:3000](http://localhost:3000)
+Откройте [http://localhost:3000](http://localhost:3000).
+
+## 🔑 Настройка API
+
+### Яндекс ID (OAuth 2.0)
+
+1. Перейдите на [https://oauth.yandex.ru](https://oauth.yandex.ru)
+2. Нажмите «Зарегистрировать новое приложение»
+3. Заполните:
+   - **Название**: AI Canvas
+   - **Платформа**: Веб-сервисы
+   - **Redirect URI**: 
+     - `http://localhost:3000/` (dev)
+     - `https://your-project.vercel.app/` (prod)
+   - **Доступы**: Яндекс ID (имя, email, аватар)
+4. Скопируйте `Client ID` в `.env.local` как `VITE_YANDEX_CLIENT_ID`
+
+### Sber GigaChat API
+
+1. Перейдите на [https://developers.sber.ru/studio/workspaces](https://developers.sber.ru/studio/workspaces)
+2. Создайте проект GigaChat API
+3. Получите `Client ID` (Authorization Key) и `Secret Key`
+4. Скопируйте в `.env.local`
+
+## 📁 Структура файлов
+
+```
+src/
+├── App.tsx                          # Главный компонент с React Flow
+├── main.tsx                         # Точка входа
+├── index.css                        # Глобальные стили (Tailwind)
+├── types.ts                         # TypeScript типы
+├── components/
+│   ├── GenerationNode.tsx           # Кастомный узел React Flow
+│   ├── TextNode.tsx                 # Текстовый узел
+│   ├── TopBar.tsx                   # Верхняя панель (логотип, auth)
+│   ├── AuthScreen.tsx               # Экран авторизации
+│   ├── ProjectSelector.tsx          # Выбор проектов
+│   ├── HelpPanel.tsx                # Панель помощи
+│   └── ui/
+│       ├── Button.tsx               # Кнопка
+│       ├── Card.tsx                 # Карточка
+│       └── Textarea.tsx             # Текстовое поле
+├── hooks/
+│   ├── useAuth.ts                   # Хук авторизации
+│   └── useProjects.ts               # Хук управления проектами
+└── lib/
+    ├── yandex-auth.ts               # Утилиты OAuth Яндекс
+    ├── utils.ts                     # Утилиты (парсинг GigaChat)
+    ├── api-auth-yandex-login.ts     # API Route: /api/auth/yandex/login
+    ├── api-auth-yandex-callback.ts  # API Route: /api/auth/yandex/callback
+    └── api-generate-image.ts        # API Route: /api/generate-image
+```
 
 ## 🔐 Как работает авторизация
 
@@ -57,71 +105,31 @@ npm run dev
 6. Токен и данные сохраняются в `localStorage`
 7. Пользователь попадает на канвас
 
-## 📁 Структура проекта
+## 🎨 Дизайн-система
 
-```
-src/
-├── App.tsx                          # Главный компонент
-├── components/
-│   ├── AuthScreen.tsx               # Экран авторизации
-│   ├── GenerationNode.tsx           # Узел генерации изображений
-│   ├── TextNode.tsx                 # Текстовый узел
-│   ├── TopBar.tsx                   # Верхняя панель
-│   ├── ProjectSelector.tsx          # Выбор проектов
-│   ├── HelpPanel.tsx                # Панель помощи
-│   └── ui/                          # UI компоненты
-├── hooks/
-│   ├── useAuth.ts                   # Хук авторизации
-│   └── useProjects.ts               # Хук управления проектами
-├── lib/
-│   ├── yandex-auth.ts               # Утилиты OAuth Яндекс
-│   └── utils.ts                     # Общие утилиты
-└── types.ts                         # TypeScript типы
-```
+Стиль минималистичный, в духе Apple:
+- **Цвета**: slate/zinc нейтральные, акцент #0071e3
+- **Шрифты**: -apple-system, BlinkMacSystemFont, SF Pro Display
+- **Скругления**: 12-16px (rounded-xl, rounded-2xl)
+- **Границы**: тонкие (1px), цвет #e5e5e7
+- **Тени**: мягкие, многослойные
+- **Эффекты**: backdrop-blur для полупрозрачных элементов (macOS-style)
 
-## 🎨 Возможности
+## 📦 Зависимости
 
-- **Нодовый интерфейс**: Создавайте и соединяйте узлы на канвасе
-- **Генерация изображений**: Описывайте изображения текстом и получайте AI-генерации
-- **Проекты**: Создавайте несколько проектов, каждый со своей доской
-- **Автосохранение**: Все изменения сохраняются автоматически
-- **Скачивание**: Скачивайте сгенерированные изображения
+| Пакет | Назначение |
+|-------|-----------|
+| `@xyflow/react` | Нодовый интерфейс (React Flow) |
+| `tailwindcss` | Утилитарные CSS-стили |
+| `lucide-react` | Иконки |
 
-## 🔧 Настройка для продакшена
+## 🔒 Безопасность
 
-### Vercel
-
-1. Запушьте код в Git репозиторий
-2. Подключите репозиторий к Vercel
-3. Добавьте переменную окружения в настройках проекта:
-   - `VITE_YANDEX_CLIENT_ID` = ваш client id
-4. В настройках Яндекс OAuth добавьте Redirect URI:
-   - `https://your-app.vercel.app/`
-
-### Переменные окружения
-
-| Переменная | Описание |
-|------------|----------|
-| `VITE_YANDEX_CLIENT_ID` | Client ID из Яндекс OAuth |
-| `GIGACHAT_CLIENT_ID` | Client ID для GigaChat API (опционально) |
-| `GIGACHAT_CLIENT_SECRET` | Client Secret для GigaChat API (опционально) |
-
-## 📝 Примечания
-
-- Авторизация работает только с реальным Яндекс ID (демо-вход удалён)
-- Токен доступа хранится в `localStorage` браузера
+- Токен Яндекс ID хранится в `localStorage` браузера
 - При выходе токен удаляется
-- Для генерации изображений требуется настройка GigaChat API
+- Валидация входных данных на клиенте
+- Защита от CSRF через state parameter в OAuth
 
-## 🛠 Технологии
-
-- **React 18** + **TypeScript**
-- **Vite** — сборщик
-- **@xyflow/react** — нодовый интерфейс
-- **Tailwind CSS** — стили
-- **Яндекс ID** — авторизация
-- **Sber GigaChat** — генерация изображений (опционально)
-
-## 📄 Лицензия
+## 📝 Лицензия
 
 MIT
