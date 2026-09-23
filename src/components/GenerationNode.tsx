@@ -60,8 +60,8 @@ export function GenerationNode({ id, data }: NodeProps) {
   }, [imageUrl, id]);
 
   const handleGenerate = useCallback(async () => {
-    // Используем prompt или incomingPrompt
-    const finalPrompt = prompt.trim() || incomingPrompt;
+    // Используем incomingPrompt (из текстовой ноды) или prompt (введённый вручную)
+    const finalPrompt = incomingPrompt || prompt.trim();
     if (!finalPrompt) return;
 
     setStatus('loading');
@@ -186,28 +186,13 @@ export function GenerationNode({ id, data }: NodeProps) {
 
       {/* Prompt Section */}
       <div className="px-4 pb-4 space-y-3">
-        {/* Входящий промпт из текстовой ноды */}
-        {incomingPrompt && (
-          <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-100">
-            <div className="flex items-center gap-1.5 mb-1.5">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-600">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                <polyline points="14 2 14 8 20 8" />
-              </svg>
-              <span className="text-xs font-medium text-emerald-700">Входящий промпт</span>
-            </div>
-            <p className="text-xs text-emerald-900 leading-relaxed whitespace-pre-wrap">
-              {incomingPrompt}
-            </p>
-          </div>
-        )}
-
         <Textarea
-          value={prompt}
+          value={incomingPrompt || prompt}
           onChange={(e) => handlePromptChange(e.target.value)}
           placeholder="Опишите изображение, которое хотите создать..."
           label="Промпт"
           rows={3}
+          disabled={!!incomingPrompt}
         />
 
         <Button
