@@ -1,5 +1,5 @@
 // Vercel Serverless Function для генерации изображений через GigaChat API
-// Путь: api/generate-image.js
+// Путь: api/generate-image.cjs
 
 const https = require('https');
 

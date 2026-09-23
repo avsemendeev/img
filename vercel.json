@@ -2,9 +2,8 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "framework": "vite",
-  "nodeVersion": "18.x",
   "functions": {
-    "api/*.js": {
+    "api/*.cjs": {
       "memory": 1024,
       "maxDuration": 60,
       "runtime": "@vercel/node@3.0.0"
