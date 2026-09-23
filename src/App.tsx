@@ -96,6 +96,7 @@ export default function App() {
           status: 'idle',
         };
     
+    const newNodeData = { data: nodeDataObj };
     const newNode = {
       id,
       type,
@@ -103,7 +104,7 @@ export default function App() {
         x: Math.random() * 500 + 50,
         y: Math.random() * 400 + 50,
       },
-      data: nodeDataObj,
+      ...newNodeData,
     } as unknown as Node;
     setNodes((nds) => [...nds, newNode]);
   }, [nodes, setNodes]);
