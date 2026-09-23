@@ -150,11 +150,12 @@ export default async function handler(req, res) {
     console.log('Available models:', modelsData.data?.map(m => m.id));
 
     // Выбираем модель для генерации изображений
-    // Приоритет: GigaChat-Pro, GigaChat, или первая доступная
+    // Приоритет: GigaChat-3-Ultra, затем GigaChat-Pro, GigaChat, или первая доступная
     const availableModels = modelsData.data?.map(m => m.id) || [];
-    let selectedModel = 'GigaChat-Pro';
+    let selectedModel = 'GigaChat-3-Ultra';
     
     if (!availableModels.includes(selectedModel)) {
+      // Если GigaChat-3-Ultra недоступна, пробуем другие модели
       selectedModel = availableModels.find(m => m.includes('GigaChat')) || availableModels[0];
     }
 
