@@ -197,6 +197,24 @@ export default async function handler(req, res) {
 
     console.log('Using model:', selectedModel);
     console.log('Step 3: Generating image...');
+    console.log('Prompt received:', prompt);
+
+    const requestBody = {
+      model: selectedModel,
+      messages: [
+        {
+          role: 'system',
+          content: 'Ты — AI-ассистент для генерации изображений. Твоя задача — создавать изображения по описанию пользователя. Для генерации изображений ты ДОЛЖЕН использовать встроенную функцию text2image. Никогда не отказывайся от создания изображения, если пользователь просит его создать. Всегда вызывай функцию text2image для генерации. Не задавай уточняющих вопросов, просто сгенерируй изображение.',
+        },
+        {
+          role: 'user',
+          content: `Нарисуй изображение: ${prompt}. Используй функцию text2image для генерации.`,
+        },
+      ],
+      function_call: 'auto',
+    };
+
+    console.log('Request body:', JSON.stringify(requestBody, null, 2));
 
     // Шаг 3: Генерируем изображение
     const completionResponse = await fetchWithCert('https://api.giga.chat/v1/chat/completions', {
@@ -206,20 +224,7 @@ export default async function handler(req, res) {
         'Accept': 'application/json',
         'Authorization': `Bearer ${accessToken}`,
       },
-      body: JSON.stringify({
-        model: selectedModel,
-        messages: [
-          {
-            role: 'system',
-            content: 'Ты — профессиональный художник. Создавай изображения по описанию пользователя.',
-          },
-          {
-            role: 'user',
-            content: `Нарисуй: ${prompt}`,
-          },
-        ],
-        function_call: 'auto',
-      }),
+      body: JSON.stringify(requestBody),
     });
 
     if (!completionResponse.ok) {
